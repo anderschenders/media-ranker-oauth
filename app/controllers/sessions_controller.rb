@@ -1,5 +1,5 @@
 class SessionsController < ApplicationController
-  skip_before_action :require_login, only: [:login]
+  skip_before_action :require_login, only: [:create]
 
   def create
     auth_hash = request.env['omniauth.auth']
@@ -10,21 +10,25 @@ class SessionsController < ApplicationController
         # User has not logged in before
         # Create a new record in the DB
         user = User.from_auth_hash(params[:provider], auth_hash)
-        save_and_flash(user)####
+        save_and_flash(user)
+        puts "user: #{user}"
 
-      else
-        session[:user_id] = user.id
+      else #user has logged in before
         flash[:status] = :success
         flash[:message] = "Successfully logged in as returning user #{user.name}"
-
       end
 
+      session[:user_id] = user.id
     else
       flash[:status] = :failure
       flash[:message] = "Could not create user from OAuth data"
     end
 
     redirect_to root_path
+  end
+
+  def index
+    @user = User.find(session[:user_id]) # < recalls the value set in a previous request
   end
 
   def logout

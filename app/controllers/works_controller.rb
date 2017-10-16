@@ -1,7 +1,10 @@
 class WorksController < ApplicationController
   # We should always be able to tell what category
   # of work we're dealing with
+  skip_before_action :require_login, only: [:root]
   before_action :category_from_work, except: [:root, :index, :new, :create]
+  # skip_before_action :require_login, only: [:root, :login]
+
 
   def root
     @albums = Work.best_albums
@@ -75,7 +78,7 @@ class WorksController < ApplicationController
         status = :found
       else
         flash[:result_text] = "Could not upvote"
-        flash[:messages] = vote.errors.messages
+        flash[:messages] = vote.errors.message
         status = :conflict
       end
     else
