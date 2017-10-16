@@ -26,6 +26,7 @@
         <% if session[:user_id] %>
         <%= link_to "Log out", logout_path, class: "button" %>
         <% else %>
+          <%# link_to "Log in", '/auth/google_oauth2', class: "button" %>
           <%= link_to "Log in", '/auth/github', class: "button" %>
         <% end %>
 

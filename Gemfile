@@ -40,6 +40,8 @@ gem 'omniauth'
 
 gem 'omniauth-github'
 
+gem 'omniauth-google-oauth2'
+
 # Use the Foundation CSS framework
 gem 'foundation-rails'
 
