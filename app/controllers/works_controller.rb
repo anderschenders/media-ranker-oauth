@@ -3,8 +3,6 @@ class WorksController < ApplicationController
   # of work we're dealing with
   skip_before_action :require_login, only: [:root]
   before_action :category_from_work, except: [:root, :index, :new, :create]
-  # skip_before_action :require_login, only: [:root, :login]
-
 
   def root
     @albums = Work.best_albums
@@ -23,8 +21,10 @@ class WorksController < ApplicationController
 
   def create
     @work = Work.new(media_params)
+    @work.user_id = session[:user_id]
     @media_category = @work.category
     if @work.save
+      @user = session[:user_id]
       flash[:status] = :success
       flash[:result_text] = "Successfully created #{@media_category.singularize} #{@work.id}"
       redirect_to work_path(@work)
@@ -44,24 +44,36 @@ class WorksController < ApplicationController
   end
 
   def update
-    @work.update_attributes(media_params)
-    if @work.save
-      flash[:status] = :success
-      flash[:result_text] = "Successfully updated #{@media_category.singularize} #{@work.id}"
-      redirect_to work_path(@work)
+    if @work.user_id != session[:user_id]
+      flash[:status] = :failure
+      flash[:result_text] = "Only the owner of the work can update it"
+      redirect_to root_path
     else
-      flash.now[:status] = :failure
-      flash.now[:result_text] = "Could not update #{@media_category.singularize}"
-      flash.now[:messages] = @work.errors.messages
-      render :edit, status: :not_found
+      @work.update_attributes(media_params)
+      if @work.save
+        flash[:status] = :success
+        flash[:result_text] = "Successfully updated #{@media_category.singularize} #{@work.id}"
+        redirect_to work_path(@work)
+      else
+        flash.now[:status] = :failure
+        flash.now[:result_text] = "Could not update #{@media_category.singularize}"
+        flash.now[:messages] = @work.errors.messages
+        render :edit, status: :not_found
+      end
     end
   end
 
   def destroy
-    @work.destroy
-    flash[:status] = :success
-    flash[:result_text] = "Successfully destroyed #{@media_category.singularize} #{@work.id}"
-    redirect_to root_path
+    if @work.user_id != session[:user_id]
+      flash[:status] = :failure
+      flash[:result_text] = "Only the owner of the work can delete it"
+      redirect_to root_path
+    else
+      @work.destroy
+      flash[:status] = :success
+      flash[:result_text] = "Successfully destroyed #{@media_category.singularize} #{@work.id}"
+      redirect_to root_path
+    end
   end
 
   def upvote
@@ -78,7 +90,7 @@ class WorksController < ApplicationController
         status = :found
       else
         flash[:result_text] = "Could not upvote"
-        flash[:messages] = vote.errors.message
+        flash[:messages] = vote.errors.messages
         status = :conflict
       end
     else
